@@ -1,12 +1,7 @@
-import phaser from 'phaser'
-export default class MatchSettings extends phaser.Scene {
+export default class Menu extends Phaser.Scene {
 
     constructor() {
-        super({ key: "match.settings" })
-    }
-
-    init(data) {
-        this.socket = data.socket;
+        super({ key: "menu" })
     }
 
     preload() {

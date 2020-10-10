@@ -1,3 +1,6 @@
+import { fullScreen } from "../utils/screen.js";
+import { pointerOver, pointerOut } from "../utils/buttons.js";
+import { validateUsername } from "../utils/validations.js";
 export default class Title extends Phaser.Scene {
 
     constructor() {
@@ -6,101 +9,68 @@ export default class Title extends Phaser.Scene {
 
     preload() {
         this.sceneStopped = false;
+        this.width = this.cameras.main.width;
+        this.height = this.cameras.main.height;
+        // Bindings
+        fullScreen.call(this);
     }
 
     create() {
-
-        // REALTIME
-        if (this.game.user && this.game.user.sub) {
-            this.add.bitmapText(600, 200, 'iceicebaby', 'welcome ' + this.game.user.sub, 40);
-            this.socket = this.game.socketIo;
-            this.socket.emit("newPlayer", { playerName: this.game.user.sub, slugNameGame: this.game.slugNameGame });
-            this.socket.on('playerConnectedClient', (player) => {
-                if (!this.sceneStopped)
-                    console.log(player + ' has joined');
-            });
-        }
-        // REALTIME   
 
         // BACKGROUND ELEMENTS
         this.add.image(640, 360, 'background');
         this.add.bitmapText(620, 100, 'iceicebaby', 'BLASTER X', 70);
         this.add.image(300, 350, 'robot');
-        let playBtn = this.add.image(900, 400, 'button').setInteractive({ cursor: 'pointer' });
-        this.add.bitmapText(860, 383, 'iceicebaby', 'PLAY', 38);
-        let helpBtn = this.add.image(900, 500, 'button').setInteractive({ cursor: 'pointer' });
+
+        const helpBtn = this.add.image(900, 500, 'button').setInteractive({ cursor: 'pointer' });
+        helpBtn.disabled = false;
+        pointerOver(helpBtn);
+        pointerOut(helpBtn);
         this.add.bitmapText(860, 483, 'iceicebaby', 'HELP', 38);
-        // BACKGROUND ELEMENTS
-
-        playBtn.on('pointerover', function () {
-            this.setTint(0xff0000);
-        });
-
-        playBtn.on('pointerout', function () {
-            this.clearTint();
-        });
-
-        playBtn.on('pointerup', () => {
-            this.sceneStopped = true;
-            this.scene.sleep("title");
-            // this.scene.start('menu', { socket: this.socket });
-        });
-
-        helpBtn.on('pointerover', function () {
-            this.setTint(0xff0000);
-        });
-
-        helpBtn.on('pointerout', function () {
-            this.clearTint();
-        });
-
         helpBtn.on('pointerup', () => {
-            this.scene.start('help');
+            if (!helpBtn.disabled)
+                this.scene.start('help');
         });
 
+        const playBtn = this.add.image(900, 400, 'button').setInteractive({ cursor: 'pointer' });
+        playBtn.disabled = false;
+        pointerOver(playBtn);
+        pointerOut(playBtn);
+        this.add.bitmapText(860, 383, 'iceicebaby', 'PLAY', 38);
+        playBtn.on('pointerup', () => {
+            if (!playBtn.disabled) {
 
-        // FULL SCREEN
-        this.scale.fullscreenTarget = document.getElementById('game');
-        let F11Key = this.input.keyboard.addKey('F11');
-        F11Key.on('down', () => {
-            if (this.scale.isFullscreen) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-                this.scale.stopFullscreen();
-            }
-            else {
-                let element = document.getElementById("game");
-                element.classList.remove("max-height-game");
-                this.scale.startFullscreen();
+                playBtn.disabled = true;
+                helpBtn.disabled = true;
+
+                const rectBackground = this.add.rectangle(this.width / 2, this.height / 2, this.width, this.height, 0x000);
+                rectBackground.alpha = 0.7;
+
+                const windowLogin = this.add.image(this.width / 2, this.height / 2, 'window1');
+                windowLogin.setScale(3, 2);
+
+                this.add.bitmapText(this.width / 2, this.height / 2 - 150, 'atarismooth', 'JOIN', 22).setOrigin(0.5);
+
+                this.add.dom(this.width / 2, this.height / 2 - 20).createFromCache('form').setOrigin(0.5);
+                const input = document.getElementById('input-custom');
+                input.placeholder = "Enter a username";
+                const errorTxt = this.add.bitmapText(this.width / 2, this.height / 2 + 30, 'atarismooth', '', 16).setOrigin(0.5);
+
+                const createBtn = this.add.image(this.width / 2, this.height / 2 + 80, 'button').setInteractive({ cursor: 'pointer' }).setOrigin(0.5);
+                pointerOver(createBtn);
+                pointerOut(createBtn);
+                this.add.bitmapText(this.width / 2, this.height / 2 + 80, 'atarismooth', 'CREATE', 22).setOrigin(0.5);
+
+                createBtn.on('pointerup', () => {
+                    errorTxt.text = validateUsername(input);
+                    if (!errorTxt.text) {
+                        this.game.socket.emit("newPlayer", { playerName: input.value.trim(), slugNameGame: this.game.config.gameTitle });
+                        this.sceneStopped = true;
+                        // this.scene.sleep("title");
+                        // this.scene.start('menu');
+                    }
+                });
             }
         });
-
-        document.addEventListener('fullscreenchange', exitHandler);
-        document.addEventListener('webkitfullscreenchange', exitHandler);
-        document.addEventListener('mozfullscreenchange', exitHandler);
-        document.addEventListener('MSFullscreenChange', exitHandler);
-
-        function exitHandler() {
-            if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-            }
-        }
-        // FULL SCREEN
-
-        // var graphics = this.add.graphics();
-
-        // graphics.lineStyle(4, 0xff00ff, 1);
-
-        // //  Without this the arc will appear closed when stroked
-        // graphics.beginPath();
-
-        // // arc (x, y, radius, startAngle, endAngle, anticlockwise)
-        // graphics.arc(400, 300, 200, phaser.Math.DegToRad(90), phaser.Math.DegToRad(180), true);
-        // graphics.strokePath();
-        // graphics.fillCircleShape();
-        // //  Uncomment this to close the path before stroking
-        // // graphics.closePath();
-
     }
 }

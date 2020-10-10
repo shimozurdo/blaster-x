@@ -32,7 +32,7 @@ export default class Preload extends Phaser.Scene {
         // Json
         this.load.tilemapTiledJSON('map', 'assets/images/tileMap.json');
         // HTML files
-        this.load.html('roomNameForm', 'assets/html/room.name.form.html');
+        this.load.html('form', 'assets/html/form.html');
 
         let progressBar = this.add.graphics();
         let progressBox = this.add.graphics();
