@@ -1,0 +1,30 @@
+{
+  "name": "blaster-x",
+  "version": "0.0.1",
+  "description": "Real-time multiplayer fighting game.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shimozurdo/blaster-x.git"
+  },
+  "author": "shimozurdo",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1",
+    "random-int": "^2.0.1",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "engines": {
+    "node": "~12.x",
+    "npm": "~6.x"
+  }
+}
