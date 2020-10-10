@@ -1,6 +1,6 @@
 
 /**
- * Validates the if the username is a name valid
+ * Validates the if the username is a valid name
  * @param {html elememnt} fld
  * @return {string} error
  */

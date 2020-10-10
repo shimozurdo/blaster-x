@@ -8,9 +8,11 @@ function fullScreen (){
     F11Key.on('down', () => {
         if (this.scale.isFullscreen) {            
             this.scale.stopFullscreen();
+            console.log("Stop fullscreen");
         }
         else {           
             this.scale.startFullscreen();
+            console.log("Start fullscreen");
         }
     });
 
@@ -21,7 +23,7 @@ function fullScreen (){
 
     function exitHandler() {
         if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-            // Catch key escape event
+            console.log("Catch key escape event");
         }
     }
 }

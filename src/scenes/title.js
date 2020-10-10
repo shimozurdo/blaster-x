@@ -11,13 +11,14 @@ export default class Title extends Phaser.Scene {
         this.sceneStopped = false;
         this.width = this.cameras.main.width;
         this.height = this.cameras.main.height;
+        
         // Bindings
         fullScreen.call(this);
     }
 
     create() {
 
-        // BACKGROUND ELEMENTS
+        // BACKGROUND 
         this.add.image(640, 360, 'background');
         this.add.bitmapText(620, 100, 'iceicebaby', 'BLASTER X', 70);
         this.add.image(300, 350, 'robot');
@@ -54,23 +55,26 @@ export default class Title extends Phaser.Scene {
                 this.add.dom(this.width / 2, this.height / 2 - 20).createFromCache('form').setOrigin(0.5);
                 const input = document.getElementById('input-custom');
                 input.placeholder = "Enter a username";
+                input.value = "shimo"; // test mode
                 const errorTxt = this.add.bitmapText(this.width / 2, this.height / 2 + 30, 'atarismooth', '', 16).setOrigin(0.5);
 
                 const createBtn = this.add.image(this.width / 2, this.height / 2 + 80, 'button').setInteractive({ cursor: 'pointer' }).setOrigin(0.5);
                 pointerOver(createBtn);
                 pointerOut(createBtn);
-                this.add.bitmapText(this.width / 2, this.height / 2 + 80, 'atarismooth', 'CREATE', 22).setOrigin(0.5);
+                this.add.bitmapText(this.width / 2, this.height / 2 + 80, 'atarismooth', 'START', 22).setOrigin(0.5);
 
                 createBtn.on('pointerup', () => {
                     errorTxt.text = validateUsername(input);
                     if (!errorTxt.text) {
-                        this.game.socket.emit("newPlayer", { playerName: input.value.trim(), slugNameGame: this.game.config.gameTitle });
+                        this.game.playerName = input.value.trim();
+                        this.game.socket.emit("newPlayer", { playerName: this.game.playerName, slugNameGame: this.game.config.gameTitle });
                         this.sceneStopped = true;
-                        // this.scene.sleep("title");
-                        // this.scene.start('menu');
+                        this.scene.sleep("title");
+                        this.scene.start('menu');
                     }
                 });
             }
         });
+        // BACKGROUND        
     }
 }

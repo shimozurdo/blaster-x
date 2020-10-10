@@ -88,6 +88,7 @@ function multiplayer(io) {
         console.log("hello ", socket.id);
 
         socket.on('newPlayer', (obj) => {
+            console.log(obj);
             if (obj && obj.playerName) {
                 let player = {
                     name: obj.playerName,
