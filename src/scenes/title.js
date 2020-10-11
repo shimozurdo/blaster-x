@@ -3,12 +3,17 @@ import { pointerOver, pointerOut } from "../utils/buttons.js";
 import { validateUsername } from "../utils/validations.js";
 export default class Title extends Phaser.Scene {
 
+    // Vars
+    width;
+    height;
+    sceneStopped = false;
+
     constructor() {
         super({ key: "title" })
     }
 
     preload() {
-        this.sceneStopped = false;
+        
         this.width = this.cameras.main.width;
         this.height = this.cameras.main.height;
         

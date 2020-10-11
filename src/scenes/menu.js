@@ -2,17 +2,24 @@ import { fullScreen } from "../utils/screen.js";
 import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
 export default class Menu extends Phaser.Scene {
 
+    // Vars
+    width;
+    height;
+    sceneStopped = false;
+    roomSceneSelected = "";
+    roomPlayerSelected = "";
+    playersGrp = null;
+    playersNameTxtGrp = null;
+
     constructor() {
         super({ key: "menu" })
     }
 
     preload() {
-        this.sceneStopped = false;
-        this.roomSceneSelected = "";
-        this.roomPlayerSelected = "";
-        this.playersGrp = null;
-        this.playersNameTxtGrp = null;
-        
+
+        this.width = this.cameras.main.width;
+        this.height = this.cameras.main.height;
+
         // Bindings
         fullScreen.call(this);
         this.pointerBack = pointerBack.bind(this);
@@ -151,7 +158,7 @@ export default class Menu extends Phaser.Scene {
             if (this.playersGrp.children.entries.length > 1 && this.playersGrp.children.entries.length <= 4) {
                 this.game.socket.emit("setCountdown", { roomName: this.roomPlayerSelected });
                 this.sceneStopped = true;
-                this.scene.sleep("match.settings");
+                this.scene.sleep("menu");
                 this.scene.start('lobby', { roomName: this.roomPlayerSelected });
             }
         });

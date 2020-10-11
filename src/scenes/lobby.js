@@ -1,5 +1,18 @@
-import phaser from 'phaser'
-export default class Lobby extends phaser.Scene {
+import { fullScreen } from "../utils/screen.js";
+import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
+export default class Lobby extends Phaser.Scene {
+
+    // Vars
+    width;
+    height;
+    playersGrp;
+    playersGrp;
+    playersNameTxtGrp;
+    countdownDelay = 500;
+    sceneStopped = false;
+    delay = 500;
+    roomName;
+    timeTxt;
 
     constructor() {
         super({ key: "lobby" })
@@ -7,25 +20,24 @@ export default class Lobby extends phaser.Scene {
 
     init(data) {
         this.roomName = data.roomName;
-        this.socket = data.socket;
     }
 
-    preload() {        
-        this.playersGrp = null;
-        this.playersNameTxtGrp = null;
-        this.posXPlayersAux = 0;
-        this.countdownDelay = 500;
-        this.delay = 500; //constant
-        this.sceneStopped = false;
+    preload() {
+
+        this.width = this.cameras.main.width;
+        this.height = this.cameras.main.height;
+        // Bindings
+        fullScreen.call(this);
+        this.pointerBack = pointerBack.bind(this);
     }
 
     create() {
 
         // REALTIME        
-        this.socket.emit("setPlayerStatus", { roomName: this.roomName, playerName: this.game.user.sub, status: "waiting" });
-        this.socket.emit("getPlayersRoom", { roomName: this.roomName, playerName: this.game.user.sub });
+        this.game.socket.emit("setPlayerStatus", { roomName: this.roomName, playerName: this.game.playerName, status: "waiting" });
+        this.game.socket.emit("getPlayersRoom", { roomName: this.roomName, playerName: this.game.playerName });
 
-        this.socket.on('startGameClient', (players) => {
+        this.game.socket.on('startGameClient', (players) => {
             console.log(players)
             if (players && players.length > 1) {
                 this.timeTxt.setText('GET READY!');
@@ -34,7 +46,7 @@ export default class Lobby extends phaser.Scene {
                     callback: () => {
                         this.sceneStopped = true;
                         this.scene.sleep("looby");
-                        this.scene.start("match", { roomName: this.roomName, socket: this.socket });
+                        this.scene.start("match", { roomName: this.roomName });
                     },
                     loop: false
                 });
@@ -43,17 +55,17 @@ export default class Lobby extends phaser.Scene {
                 this.time.addEvent({
                     delay: 500,
                     callback: () => {
-                        this.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.user.sub });
+                        this.game.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.playerName });
                         this.sceneStopped = true;
                         this.scene.sleep("looby");
-                        this.scene.start('match.settings', { socket: this.socket });
+                        this.scene.start('menu');
                     },
                     loop: false
                 });
             }
         });
 
-        this.socket.on('currentPlayersClient', (obj) => {
+        this.game.socket.on('currentPlayersClient', (obj) => {
             if (!this.sceneStopped) {
                 if (this.playersGrp.children.entries.length > 0)
                     this.playersGrp.children.each((player) => {
@@ -68,27 +80,27 @@ export default class Lobby extends phaser.Scene {
                 if (obj.playersList.length > 0) {
                     obj.playersList.forEach((playerObj) => {
                         if (playerObj.status === "waiting") {
-                            let playerNameTxt = this.add.bitmapText(((this.game.config.width / 4) / 2) + posX, 450, 'iceicebaby', playerObj.name, 32).setOrigin(0.5);
-                            let player = this.add.sprite(((this.game.config.width / 4) / 2) + posX, 550, 'dude');
+                            let playerNameTxt = this.add.bitmapText(((this.width / 4) / 2) + posX, 450, 'iceicebaby', playerObj.name, 32).setOrigin(0.5);
+                            let player = this.add.sprite(((this.width / 4) / 2) + posX, 550, 'dude');
                             player.setScale(2, 2); /// if number is negative its fliped                            
                             player.name = playerObj.name;
                             playerNameTxt.name = playerObj.name;
                             this.playersGrp.add(player);
                             this.playersNameTxtGrp.add(playerNameTxt);
-                            posX += this.game.config.width / 4;
+                            posX += this.width / 4;
                         }
                     });
                 }
             }
         });
 
-        this.socket.on('getCountdownClient', (obj) => {
+        this.game.socket.on('getCountdownClient', (obj) => {
             if (!this.sceneStopped && obj.sceneCountdown === "lobby") {
                 this.timeTxt.setText(parseInt((obj.countdown / 1000)));
             }
         });
 
-        this.socket.on('playerDisconnected', (playerName) => {
+        this.game.socket.on('playerDisconnected', (playerName) => {
             console.log(playerName + "has disconected");
             if (!this.sceneStopped) {
                 if (this.playersGrp.children.entries.length > 0)
@@ -107,26 +119,12 @@ export default class Lobby extends phaser.Scene {
         });
         // REALTIME 
 
-        // BACKGROUND ELEMENTS
+        // BACKGROUND
         this.add.image(640, 360, 'background');
-        this.add.bitmapText(this.game.config.width / 2, 200, 'iceicebaby', 'Wating for opponents...', 50).setOrigin(0.5);
-        this.timeTxt = this.add.bitmapText(this.game.config.width / 2, 300, 'atarismooth', "", 32).setOrigin(0.5);
-        // BACKGROUND ELEMENTS
-
-        // GROUPS AND PLAYERS
-        this.playersGrp = this.add.group();
-        this.playersNameTxtGrp = this.add.group();
-        // GROUPS AND PLAYERS
-
-        // BACK 
-        let backBtn = this.add.image(50, 50, 'back').setInteractive({ cursor: 'pointer' });
-        backBtn.on('pointerover', function () {
-            this.setTint(0xff0000);
-        });
-        backBtn.on('pointerout', function () {
-            this.clearTint();
-        });
-        backBtn.on('pointerup', () => {
+        this.add.bitmapText(this.width / 2, 200, 'iceicebaby', 'Wating for opponents...', 50).setOrigin(0.5);
+        this.timeTxt = this.add.bitmapText(this.width / 2, 300, 'atarismooth', "", 32).setOrigin(0.5);
+        // back
+        this.pointerBack(() => {
             if (this.playersGrp.children.entries && this.playersGrp.children.entries.length > 0)
                 this.playersGrp.children.each((player) => {
                     if (player.name === this.game.user.sub) {
@@ -140,48 +138,25 @@ export default class Lobby extends phaser.Scene {
                     }
                 });
 
-            this.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.user.sub });
+            this.game.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.playerName });
             this.sceneStopped = true;
             this.scene.sleep("looby");
-            this.scene.start('match.settings', { socket: this.socket });
+            this.scene.start('menu');
         });
-        // BACK 
+        // back
+        // BACKGROUND
 
-        // FULL SCREEN
-        this.scale.fullscreenTarget = document.getElementById('game');
-        let F11Key = this.input.keyboard.addKey('F11');
-        F11Key.on('down', () => {
-            if (this.scale.isFullscreen) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-                this.scale.stopFullscreen();
-            }
-            else {
-                let element = document.getElementById("game");
-                element.classList.remove("max-height-game");
-                this.scale.startFullscreen();
-            }
-        });
-
-        document.addEventListener('fullscreenchange', exitHandler);
-        document.addEventListener('webkitfullscreenchange', exitHandler);
-        document.addEventListener('mozfullscreenchange', exitHandler);
-        document.addEventListener('MSFullscreenChange', exitHandler);
-
-        function exitHandler() {
-            if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-            }
-        }
-        // FULL SCREEN
+        // GROUPS AND PLAYERS
+        this.playersGrp = this.add.group();
+        this.playersNameTxtGrp = this.add.group();
+        // GROUPS AND PLAYERS
     }
 
     update(time, delta) {
         this.countdownDelay -= delta;
         if (this.countdownDelay < 0) {
             this.countdownDelay = this.delay;
-            this.socket.emit("getCountdown", { roomName: this.roomName });
+            this.game.socket.emit("getCountdown", { roomName: this.roomName });
         }
     }
 }

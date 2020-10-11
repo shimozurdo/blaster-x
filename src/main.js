@@ -1,7 +1,7 @@
 import Title from "./scenes/title.js"
 import Menu from "./scenes/menu.js"
 import Help from "./scenes/help.js"
-// import Lobby from "./scenes/lobby";
+import Lobby from "./scenes/lobby.js";
 // import Match from "./scenes/match";
 import Preload from './scenes/preload.js'
 import { CONSTANT } from "./constant.js";
@@ -25,7 +25,7 @@ const config = {
     dom: {
         createContainer: true
     },
-    scene: [Preload, Title, Help, Menu]
+    scene: [Preload, Title, Help, Menu, Lobby]
 };
 
 const socketIo = io(CONSTANT.SOCKET_URL, { query: "player=guest" });
