@@ -1,6 +1,7 @@
-import phaser from 'phaser'
-import Bullet from '../gameObjects/bullet'
-export default class Match extends phaser.Scene {
+import { fullScreen } from "../utils/screen.js";
+import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
+import Bullet from '../game-objects/bullet.js'
+export default class Match extends Phaser.Scene {
 
     constructor() {
         super({ key: "match" })
@@ -8,7 +9,6 @@ export default class Match extends phaser.Scene {
 
     init(data) {
         this.roomName = data.roomName;
-        this.socket = data.socket;
     }
 
     preload() {
@@ -34,14 +34,14 @@ export default class Match extends phaser.Scene {
     create() {
 
         // REALTIME
-        this.socket.emit("setPlayerStatus", { roomName: this.roomName, playerName: this.game.user.sub, status: "playing" });
-        this.socket.emit("getRoom", { roomName: this.roomName });
+        this.game.socket.emit("setPlayerStatus", { roomName: this.roomName, playerName: this.game.playerName, status: "playing" });
+        this.game.socket.emit("getRoom", { roomName: this.roomName });
 
-        this.socket.on('startGameClient', (room) => {
+        this.game.socket.on('startGameClient', (room) => {
             console.log("entra startGameClient")
         });
 
-        this.socket.on('currentRoomClient', (room) => {
+        this.game.socket.on('currentRoomClient', (room) => {
             if (!this.sceneStopped) {
                 let playersPosScene = [];
                 if (room.players && room.players.length > 0) {
@@ -59,13 +59,13 @@ export default class Match extends phaser.Scene {
             }
         });
 
-        this.socket.on('renderGameObjectsClient', (obj) => {
+        this.game.socket.on('renderGameObjectsClient', (obj) => {
             if (!this.sceneStopped) {
                 this.renderGameObjects(obj);
             }
         });
 
-        this.socket.on('newPlayerPosScene', (obj) => {
+        this.game.socket.on('newPlayerPosScene', (obj) => {
             if (!this.sceneStopped) {
                 // fix timer countdown
                 this.countdown = obj.countdown;
@@ -193,8 +193,8 @@ export default class Match extends phaser.Scene {
 
         keyDown.on('down', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub && player.delayFire <= 0) {
-                    this.socket.emit("renderGameObjects", { action: "playerShot", roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, flipX: player.flipX });
+                if (!player.gameOver && player.name === this.game.playerName && player.delayFire <= 0) {
+                    this.game.socket.emit("renderGameObjects", { action: "playerShot", roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, flipX: player.flipX });
                     player.delayFire = 200;
 
                 }
@@ -203,45 +203,45 @@ export default class Match extends phaser.Scene {
 
         keyLeft.on('down', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub) {
+                if (!player.gameOver && player.name === this.game.playerName) {
                     player.action.isLeft = true;
-                    this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                    this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                 }
             });
         });
 
         keyLeft.on('up', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub) {
+                if (!player.gameOver && player.name === this.game.playerName) {
                     player.action.isLeft = false;
-                    this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                    this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                 }
             });
         });
 
         keyRight.on('down', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub) {
+                if (!player.gameOver && player.name === this.game.playerName) {
                     player.action.isRight = true;
-                    this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                    this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                 }
             });
         });
 
         keyRight.on('up', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub) {
+                if (!player.gameOver && player.name === this.game.playerName) {
                     player.action.isRight = false;
-                    this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                    this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                 }
             });
         });
 
         keyUp.on('up', () => {
             this.playersGrp.children.each((player) => {
-                if (!player.gameOver && player.name === this.game.user.sub) {
+                if (!player.gameOver && player.name === this.game.playerName) {
                     player.action.isJumping = false;
-                    this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                    this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                 }
             });
         });
@@ -281,22 +281,22 @@ export default class Match extends phaser.Scene {
 
             if (this.playersGrp.children.entries && this.playersGrp.children.entries.length > 0)
                 this.playersGrp.children.each((player) => {
-                    if (player.name === this.game.user.sub) {
+                    if (player.name === this.game.playerName) {
                         this.playersGrp.remove(player, true, true);
                     }
                 });
 
             if (this.playersScoreGrp.children.entries && this.playersScoreGrp.children.entries.length > 0)
                 this.playersScoreGrp.children.each((playersScore) => {
-                    if (playersScore.name === this.game.user.sub) {
+                    if (playersScore.name === this.game.playerName) {
                         this.playersScoreGrp.remove(playersScore, true, true);
                     }
                 });
 
-            this.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.user.sub });
+            this.game.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.playerName });
             this.sceneStopped = true;
             this.scene.sleep("match");
-            this.scene.start('match.settings', { socket: this.socket });
+            this.scene.start('match.settings', { socket: this.game.socket });
         });
         // BACK 
 
@@ -448,7 +448,7 @@ export default class Match extends phaser.Scene {
             let _playerScore = this.add.bitmapText(((this.quarterScreenW * player.posScene) - this.quarterScreenW + 50), 20, 'atarismooth', 'P' + player.posScene + ': 0', 40).setOrigin(0).setScrollFactor(0);
             _playerScore.name = player.name;
             this.playersScoreGrp.add(_playerScore);
-            if (_player.name === this.game.user.sub) {
+            if (_player.name === this.game.playerName) {
                 // main camera
                 this.mainCamera = this.cameras.main.startFollow(_player, true, 1, .1, 0, 160);
                 this.mainCamera.setBounds(0, 0, this.boundsScene.x, this.boundsScene.y);
@@ -460,17 +460,17 @@ export default class Match extends phaser.Scene {
     }
 
     collectCoin(player, coin) {
-        if (coin.isVisible && player.name === this.game.user.sub && player.delayDamage < 0) {
+        if (coin.isVisible && player.name === this.game.playerName && player.delayDamage < 0) {
             coin.isVisible = false;
             // console.log("coin ", coin.isVisible)
             this.coinsGrp.remove(coin, true, true);
-            this.socket.emit("renderGameObjects", { action: "collectCoin", coinName: coin.name, roomName: this.roomName, playerName: player.name });
+            this.game.socket.emit("renderGameObjects", { action: "collectCoin", coinName: coin.name, roomName: this.roomName, playerName: player.name });
         }
 
         // if (this.coinsGrp.countActive(true) === 0) {
         //     // console.log("create coins")
-        //     this.socket.emit("renderGameObjects", { action: "createCoins", roomName: this.roomName });
-        //     this.socket.emit("renderGameObjects", { action: "createBoom", roomName: this.roomName, boundsSceneX: this.boundsScene.x });
+        //     this.game.socket.emit("renderGameObjects", { action: "createCoins", roomName: this.roomName });
+        //     this.game.socket.emit("renderGameObjects", { action: "createBoom", roomName: this.roomName, boundsSceneX: this.boundsScene.x });
         // }
     }
 
@@ -498,8 +498,8 @@ export default class Match extends phaser.Scene {
     hitPlayer(bullet, player) {
         if (!bullet.collided && bullet.owner !== player.name && player.delayDamage < 0) {
             bullet.collided = true;
-            if (player.name === this.game.user.sub) {
-                this.socket.emit("renderGameObjects", { action: "hitPlayer", roomName: this.roomName, playerName: player.name, playerX: player.x, playerY: player.y, playerFlipX: bullet.playerFlipX });
+            if (player.name === this.game.playerName) {
+                this.game.socket.emit("renderGameObjects", { action: "hitPlayer", roomName: this.roomName, playerName: player.name, playerX: player.x, playerY: player.y, playerFlipX: bullet.playerFlipX });
             }
         } else if (bullet.collided) {
             bullet.destroy();
@@ -521,7 +521,7 @@ export default class Match extends phaser.Scene {
 
         // //players connected
         this.playersGrp.children.each((player) => {
-            if (player.name === this.game.user.sub) {
+            if (player.name === this.game.playerName) {
                 if (!player.gameOver) {
                     this.bgLayer1.tilePositionX = this.mainCamera.scrollX * .1;
                     if (this.cursors.left.isDown) {
@@ -538,7 +538,7 @@ export default class Match extends phaser.Scene {
 
                     if (this.cursors.up.isDown && player.body.onFloor()) {
                         player.action.onJump = true;
-                        this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                        this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                     }
 
                     this.delayMS -= delta;
@@ -546,12 +546,12 @@ export default class Match extends phaser.Scene {
                     if (this.delayMS < 0) {
                         // console.log("refresh all every .2 second")
                         this.delayMS = this.delay;
-                        this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX });
+                        this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX });
                     }
                     // else if (this.oneSecondMS < 0) {
                     //     // console.log("refresh all every second")
                     //     this.oneSecondMS = 1000;
-                    //     this.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.user.sub, action: player.action, maxSpeedX: player.maxSpeedX, do: "fixAll" });
+                    //     this.game.socket.emit("setPlayerPosScene", { roomName: this.roomName, posX: player.x, posY: player.y, playerName: this.game.playerName, action: player.action, maxSpeedX: player.maxSpeedX, do: "fixAll" });
                     // }                    
                 }
             }

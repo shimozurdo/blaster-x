@@ -2,9 +2,11 @@ import Title from "./scenes/title.js"
 import Menu from "./scenes/menu.js"
 import Help from "./scenes/help.js"
 import Lobby from "./scenes/lobby.js";
-// import Match from "./scenes/match";
+import Match from "./scenes/match.js";
 import Preload from './scenes/preload.js'
 import { CONSTANT } from "./constant.js";
+
+console.log("entra");
 
 const config = {
     title: "Blaster x",
@@ -25,7 +27,7 @@ const config = {
     dom: {
         createContainer: true
     },
-    scene: [Preload, Title, Help, Menu, Lobby]
+    scene: [Preload, Title, Help, Menu, Lobby, Match]
 };
 
 const socketIo = io(CONSTANT.SOCKET_URL, { query: "player=guest" });

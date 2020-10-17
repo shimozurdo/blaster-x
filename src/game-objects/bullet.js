@@ -45,17 +45,14 @@
 //     }
 // }
 
-// export default BulletsGroup;
+let Bullet = new Phaser.Class({
 
-import phaser from 'phaser'
-let Bullet = new phaser.Class({
-
-    Extends: phaser.GameObjects.Sprite,
+    Extends: Phaser.GameObjects.Sprite,
 
     initialize:
         function Bullet(scene) {
-            phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'bullet1');
-            this.speed = phaser.Math.GetSpeed(800, 1);
+            Phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'bullet1');
+            this.speed = Phaser.Math.GetSpeed(800, 1);
             this.playerFlipX = false;
         },
 

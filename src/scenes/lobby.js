@@ -1,5 +1,5 @@
 import { fullScreen } from "../utils/screen.js";
-import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
+import { pointerBack } from "../utils/buttons.js";
 export default class Lobby extends Phaser.Scene {
 
     // Vars
