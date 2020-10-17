@@ -1,5 +1,7 @@
 import { fullScreen } from "../utils/screen.js";
 import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
+import CONST from '../constant.js'
+
 export default class Menu extends Phaser.Scene {
 
     // Vars
@@ -27,8 +29,7 @@ export default class Menu extends Phaser.Scene {
 
     create() {
 
-        // REALTIME       
-
+        // REALTIME
         // Check room default
         this.roomSceneSelected = '0';
 
@@ -105,7 +106,7 @@ export default class Menu extends Phaser.Scene {
 
         // REALTIME
 
-        // BACKGROUND AND CONTROLS    
+        // BACKGROUND AND HUD    
         this.add.image(640, 360, 'background');
         this.add.image(200, 600, 'gumbot');
         this.add.bitmapText(this.game.config.width / 2, 100, 'iceicebaby', "Welcome", 60).setOrigin(0.5);
@@ -115,14 +116,8 @@ export default class Menu extends Phaser.Scene {
 
         this.add.bitmapText(750, 300, 'iceicebaby', "Choose a room", 40).setOrigin(0.5);
 
-        let fire = this.add.sprite(570, 390, 'fire').setOrigin(0.5);
-        this.anims.create({
-            key: 'rotating',
-            frames: this.anims.generateFrameNumbers('fire'),
-            frameRate: 10,
-            repeat: -1
-        });
-        fire.play('rotating');
+        let fire = this.add.sprite(570, 390, 'fire').setOrigin(0.5);        
+        fire.play(CONST.ANIM.ROTATE + "-fire-loading");
 
         this.add.bitmapText(650, 400, 'iceicebaby', "Main", 35).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
         let joinBtn = this.add.image(830, 400, 'button').setOrigin(0.5).setInteractive({ cursor: 'pointer' });
@@ -173,7 +168,7 @@ export default class Menu extends Phaser.Scene {
             this.scene.start('title');
         });
         // back    
-        // BACKGROUND AND CONTROLS
+        // BACKGROUND AND HUD
 
         // GROUPS AND PLAYERS
         this.playersGrp = this.add.group();
@@ -192,4 +187,3 @@ export default class Menu extends Phaser.Scene {
         }
     }
 }
-

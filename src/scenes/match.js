@@ -1,7 +1,28 @@
 import { fullScreen } from "../utils/screen.js";
 import { pointerOver, pointerOut, pointerBack } from "../utils/buttons.js";
 import Bullet from '../game-objects/bullet.js'
+import CONST from '../constant.js'
+
 export default class Match extends Phaser.Scene {
+
+    // Vars
+    boundsScene = { x: 1408, y: 1024 };
+    quarterScreenW = (this.boundsScene.x - 128) / 4;
+    sceneStopped = false;
+    delayMS = 200;
+    delay = 200; //constant     
+    oneSecondMS = 1000;
+    countdown = 0;
+    mainCamera = null;
+    cursors = null;
+    gameOver = true;
+    deceleration = .95;
+    playersGrp = null;
+    playersScoreGrp = null;
+    coinsGrp = null;
+    bombsGrp = null;
+    bulletsGrp = null;
+    platformsGrp = null;
 
     constructor() {
         super({ key: "match" })
@@ -12,23 +33,9 @@ export default class Match extends Phaser.Scene {
     }
 
     preload() {
-        this.boundsScene = { x: 1408, y: 1024 };
-        this.quarterScreenW = (this.boundsScene.x - 128) / 4;
-        this.sceneStopped = false;
-        this.delayMS = 200;
-        this.delay = 200; //constant     
-        this.oneSecondMS = 1000;
-        this.countdown = 0;
-        this.mainCamera = null;
-        this.cursors = null;
-        this.gameOver = true;
-        this.deceleration = .95;
-        this.playersGrp = null;
-        this.playersScoreGrp = null;
-        this.coinsGrp = null;
-        this.bombsGrp = null;
-        this.bulletsGrp = null;
-        this.platformsGrp = null;
+        // Bindings
+        fullScreen.call(this);
+        this.pointerBack = pointerBack.bind(this);
     }
 
     create() {
@@ -90,7 +97,7 @@ export default class Match extends Phaser.Scene {
         });
         // REALTIME
 
-        // BACKGROUND ELEMENTS
+        // BACKGROUND AND HUD
         this.bgLayer0 = this.add.image(0, 0, 'layer0-bg-match').setOrigin(0);
         this.bgLayer0.setScrollFactor(0);
         this.bgLayer1 = this.add.tileSprite(0, 0, this.game.config.width, this.game.config.height, 'layer1-bg-match').setOrigin(0, 0);
@@ -99,18 +106,39 @@ export default class Match extends Phaser.Scene {
         // hud
         this.timerTxt = this.add.bitmapText(this.game.config.width / 2, 100, 'atarismooth', "", 32).setOrigin(0, 0);
         this.timerTxt.setScrollFactor(0);
+        // hud
 
         // map
         this.map = this.make.tilemap({ key: 'map' });
         this.tileSet = this.map.addTilesetImage('tileSet', 'tileSetImg');
         this.tileMap = this.map.createDynamicLayer('staticObjects', this.tileSet, 0, 0);
-
-        // this.rigidBody.setCollisionByProperty({ 'rigidBody': true });
         // map
-        // BACKGROUND ELEMENTS
 
-        // GROUPS   
+        // back
+        this.pointerBack(() => {
+            if (this.playersGrp.children.entries && this.playersGrp.children.entries.length > 0)
+                this.playersGrp.children.each((player) => {
+                    if (player.name === this.game.playerName) {
+                        this.playersGrp.remove(player, true, true);
+                    }
+                });
 
+            if (this.playersScoreGrp.children.entries && this.playersScoreGrp.children.entries.length > 0)
+                this.playersScoreGrp.children.each((playersScore) => {
+                    if (playersScore.name === this.game.playerName) {
+                        this.playersScoreGrp.remove(playersScore, true, true);
+                    }
+                });
+
+            this.game.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.playerName });
+            this.sceneStopped = true;
+            this.scene.sleep("match");
+            this.scene.start('match.settings', { socket: this.game.socket });
+        });
+        // back
+        // BACKGROUND AND HUD
+
+        // GROUPS AND PLAYERS
         this.playersGrp = this.physics.add.group();
         this.playersScoreGrp = this.add.group();
         this.coinsGrp = this.physics.add.group();
@@ -122,8 +150,7 @@ export default class Match extends Phaser.Scene {
         });
         this.platformsGrp = this.physics.add.staticGroup();
 
-        //create collisions for the tileMap        
-
+        //create collisions for the tileMap
         const mapCollitions = [
             { x: 1 * 32, y: 1 * 32, scaleX: 42, scaleY: 1 },
             { x: 1 * 32, y: 24 * 32, scaleX: 42, scaleY: 1 },
@@ -148,39 +175,7 @@ export default class Match extends Phaser.Scene {
             platform.visible = false;
             platform.refreshBody();
         }
-
-        //  Animations.
-        this.anims.create({
-            key: 'run',
-            frames: this.anims.generateFrameNumbers('dude', { start: 1, end: 4 }),
-            frameRate: 15,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'idle',
-            frames: [{ key: 'dude', frame: 0 }]
-        });
-
-        this.anims.create({
-            key: 'jump',
-            frames: [{ key: 'dude', frame: 4 }]
-        });
-
-        this.anims.create({
-            key: 'shooting',
-            frames: this.anims.generateFrameNumbers('bullet1', { start: 0, end: 2 }),
-            frameRate: 15,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'spinning',
-            frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }),
-            frameRate: 6,
-            repeat: -1,
-            yoyo: true
-        });
+        //create collisions for the tileMap
         // GROUPS AND PLAYERS
 
         // EVENTS AND TRIGGERS
@@ -267,67 +262,6 @@ export default class Match extends Phaser.Scene {
             alpha: 0,
             duration: 5000
         }, this);
-
-        // BACK 
-        let backBtn = this.add.image(30, 30, 'back').setOrigin(0).setInteractive({ cursor: 'pointer' });
-        backBtn.setScrollFactor(0);
-        backBtn.on('pointerover', function () {
-            this.setTint(0xff0000);
-        });
-        backBtn.on('pointerout', function () {
-            this.clearTint();
-        });
-        backBtn.on('pointerup', () => {
-
-            if (this.playersGrp.children.entries && this.playersGrp.children.entries.length > 0)
-                this.playersGrp.children.each((player) => {
-                    if (player.name === this.game.playerName) {
-                        this.playersGrp.remove(player, true, true);
-                    }
-                });
-
-            if (this.playersScoreGrp.children.entries && this.playersScoreGrp.children.entries.length > 0)
-                this.playersScoreGrp.children.each((playersScore) => {
-                    if (playersScore.name === this.game.playerName) {
-                        this.playersScoreGrp.remove(playersScore, true, true);
-                    }
-                });
-
-            this.game.socket.emit("quitLobby", { roomName: this.roomName, playerName: this.game.playerName });
-            this.sceneStopped = true;
-            this.scene.sleep("match");
-            this.scene.start('match.settings', { socket: this.game.socket });
-        });
-        // BACK 
-
-        // FULL SCREEN
-        this.scale.fullscreenTarget = document.getElementById('game');
-        let F11Key = this.input.keyboard.addKey('F11');
-        F11Key.on('down', () => {
-            if (this.scale.isFullscreen) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-                this.scale.stopFullscreen();
-            }
-            else {
-                let element = document.getElementById("game");
-                element.classList.remove("max-height-game");
-                this.scale.startFullscreen();
-            }
-        });
-
-        document.addEventListener('fullscreenchange', exitHandler);
-        document.addEventListener('webkitfullscreenchange', exitHandler);
-        document.addEventListener('mozfullscreenchange', exitHandler);
-        document.addEventListener('MSFullscreenChange', exitHandler);
-
-        function exitHandler() {
-            if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
-                let element = document.getElementById("game");
-                element.classList.add("max-height-game");
-            }
-        }
-        // FULL SCREEN
     }
 
     renderGameObjects(obj) {
@@ -360,7 +294,7 @@ export default class Match extends Phaser.Scene {
                     if (bullet) {
                         bullet.body.setSize(10, 10);
                         bullet.fire(obj.posX, obj.posY, obj.flipX);
-                        bullet.anims.play('shooting');
+                        bullet.anims.play(CONST.ANIM.SHOOT + "-bullet1");
                         bullet.owner = obj.playerName;
                         bullet.collided = false;
                     }
@@ -403,7 +337,7 @@ export default class Match extends Phaser.Scene {
                             loop: false
                         });
                         coin.body.setSize(18, 24);
-                        coin.anims.play("spinning");
+                        coin.anims.play(CONST.ANIM.ROTATE + "-coin");
                         this.coinsGrp.add(coin);
                     }
                 }
@@ -414,7 +348,7 @@ export default class Match extends Phaser.Scene {
                         coin.name = item.name;
                         coin.isVisible = true;
                         coin.owner = null;
-                        coin.anims.play("spinning");
+                        coin.anims.play(CONST.ANIM.ROTATE + "-coin");
                         coin.body.setSize(18, 24);
                         this.coinsGrp.add(coin);
                     }
@@ -427,30 +361,30 @@ export default class Match extends Phaser.Scene {
     }
 
     renderPlayers(playersPosScene) {
-        playersPosScene.forEach(player => {
-            let _player = this.physics.add.sprite((this.quarterScreenW * player.posScene) - (this.quarterScreenW / 2) + 64, 608, 'dude');
-            _player.name = player.name;
-            _player.gameOver = false;
-            _player.posScene = player.posScene;
-            _player.maxSpeedX = 400;
-            _player.coins = 0;
-            _player.delayFire = 0;
-            _player.delayDamage = -1; // 0 or greater player get damaged
-            _player.setSize(28, 56);
-            _player.action = {
+        playersPosScene.forEach(obj => {
+            let player = this.physics.add.sprite((this.quarterScreenW * obj.posScene) - (this.quarterScreenW / 2) + 64, 608, 'dude');
+            player.name = obj.name;
+            player.gameOver = false;
+            player.posScene = obj.posScene;
+            player.maxSpeedX = 400;
+            player.coins = 0;
+            player.delayFire = 0;
+            player.delayDamage = -1; // 0 or greater player get damaged
+            player.setSize(28, 56);
+            player.action = {
                 isLeft: false,
                 isRight: false,
                 isJumping: false,
                 onJump: false
             };
-            _player.anims.play('idle');
-            this.playersGrp.add(_player);
-            let _playerScore = this.add.bitmapText(((this.quarterScreenW * player.posScene) - this.quarterScreenW + 50), 20, 'atarismooth', 'P' + player.posScene + ': 0', 40).setOrigin(0).setScrollFactor(0);
-            _playerScore.name = player.name;
-            this.playersScoreGrp.add(_playerScore);
-            if (_player.name === this.game.playerName) {
+            player.anims.play(CONST.ANIM.IDLE + "-dude");
+            this.playersGrp.add(player);
+            let playerScore = this.add.bitmapText(((this.quarterScreenW * obj.posScene) - this.quarterScreenW + 50), 20, 'atarismooth', 'P' + player.posScene + ': 0', 40).setOrigin(0).setScrollFactor(0);
+            playerScore.name = player.name;
+            this.playersScoreGrp.add(playerScore);
+            if (player.name === this.game.playerName) {
                 // main camera
-                this.mainCamera = this.cameras.main.startFollow(_player, true, 1, .1, 0, 160);
+                this.mainCamera = this.cameras.main.startFollow(player, true, 1, .1, 0, 160);
                 this.mainCamera.setBounds(0, 0, this.boundsScene.x, this.boundsScene.y);
                 // main camera
                 this.gameOver = false;
@@ -559,7 +493,7 @@ export default class Match extends Phaser.Scene {
             if (player.action.onJump && player.body.onFloor()) {
                 player.setVelocityY(-600);
                 player.maxSpeedX = 300;
-                player.anims.play('jump');
+                player.anims.play(CONST.ANIM.JUMP + "-dude");
             } else if (!player.body.onFloor()) {
                 player.action.onJump = false;
                 player.action.isJumping = true;
@@ -581,16 +515,16 @@ export default class Match extends Phaser.Scene {
 
             } else if (player.action.isLeft) {
                 player.setVelocityX(-(player.maxSpeedX));
-                player.anims.play('run', true)
+                player.anims.play(CONST.ANIM.RUN + "-dude", true)
                 player.setFlipX(true);
             } else if (player.action.isRight) {
                 player.setVelocityX(player.maxSpeedX);
-                player.anims.play('run', true)
+                player.anims.play(CONST.ANIM.RUN + "-dude", true)
                 player.setFlipX(false);
             } else if (player.body.deltaY() > 0 && player.body.onFloor()) {
                 player.setVelocityX(0);
                 player.maxSpeedX = 400;
-                player.anims.play('idle');
+                player.anims.play(CONST.ANIM.IDLE + "-dude");
                 player.action.onJump = false;
                 player.action.isJumping = false;
             }

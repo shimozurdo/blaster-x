@@ -4,7 +4,7 @@ import Help from "./scenes/help.js"
 import Lobby from "./scenes/lobby.js";
 import Match from "./scenes/match.js";
 import Preload from './scenes/preload.js'
-import { CONSTANT } from "./constant.js";
+import CONST from "./constant.js";
 
 console.log("entra");
 
@@ -30,6 +30,6 @@ const config = {
     scene: [Preload, Title, Help, Menu, Lobby, Match]
 };
 
-const socketIo = io(CONSTANT.SOCKET_URL, { query: "player=guest" });
+const socketIo = io(CONST.SOCKET_URL, { query: "player=guest" });
 const game = new Phaser.Game(config);
 game.socket = socketIo;

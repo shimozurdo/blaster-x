@@ -21,7 +21,7 @@ export default class Help extends Phaser.Scene {
     }
 
     create() {
-        // BACKGROUND ELEMENTS
+        // BACKGROUND AND HUD
         this.add.image(640, 360, 'background');
         this.add.bitmapText(this.width / 2, this.height / 2, 'iceicebaby', "Press F11 key for full screen", 38).setOrigin(0.5);
         // back 
@@ -30,6 +30,6 @@ export default class Help extends Phaser.Scene {
             this.scene.start('title');
         });
         // back
-        // BACKGROUND ELEMENTS
+        // BACKGROUND AND HUD
     }
 }

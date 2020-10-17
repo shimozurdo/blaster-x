@@ -1,3 +1,6 @@
+import { createAnimation } from "../utils/scenes.js"
+import CONST from '../constant.js'
+
 export default class Preload extends Phaser.Scene {
 
     // Vars
@@ -31,13 +34,13 @@ export default class Preload extends Phaser.Scene {
         // Sprite sheets
         this.load.spritesheet('coin', 'assets/images/coin.png', { frameWidth: 24, frameHeight: 24 });
         this.load.spritesheet('bullet1', 'assets/images/bullet1.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('fire', 'assets/images/fire.png', { frameWidth: 50, frameHeight: 50 });
+        this.load.spritesheet('fire-loading', 'assets/images/fire-loading.png', { frameWidth: 50, frameHeight: 50 });
         this.load.spritesheet('dude', 'assets/images/dude.png', { frameWidth: 48, frameHeight: 56 });
         // Json
         this.load.tilemapTiledJSON('map', 'assets/images/tileMap.json');
         // HTML files
         this.load.html('form', 'assets/html/form.html');
-        
+
         this.width = this.cameras.main.width;
         this.height = this.cameras.main.height;
 
@@ -108,5 +111,19 @@ export default class Preload extends Phaser.Scene {
                 loop: false
             });
         });
+
+        //binding actions to thins scene
+        this.createAnimation = createAnimation.bind(this);
+    }
+
+    create() {
+        // ANIMATIONS       
+        this.createAnimation(CONST.ANIM.ROTATE + "-fire-loading", "fire-loading", 0, 7, 10, -1);
+        this.createAnimation(CONST.ANIM.ROTATE + "-coin", 'coin', 0, 3, 6, -1, true);
+        this.createAnimation(CONST.ANIM.RUN + "-dude", 'dude', 1, 4, 15, -1);
+        this.createAnimation(CONST.ANIM.IDLE + "-dude", 'dude', 0, 0);
+        this.createAnimation(CONST.ANIM.JUMP + "-dude", 'dude', 4, 4);
+        this.createAnimation(CONST.ANIM.SHOOT + "-bullet1", 'bullet1', 0, 2, 15, -1);  
+        // ANIMATIONS
     }
 }

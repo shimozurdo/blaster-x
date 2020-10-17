@@ -37,8 +37,7 @@ export default class Lobby extends Phaser.Scene {
         this.game.socket.emit("setPlayerStatus", { roomName: this.roomName, playerName: this.game.playerName, status: "waiting" });
         this.game.socket.emit("getPlayersRoom", { roomName: this.roomName, playerName: this.game.playerName });
 
-        this.game.socket.on('startGameClient', (players) => {
-            console.log(players)
+        this.game.socket.on('startGameClient', (players) => {            
             if (players && players.length > 1) {
                 this.timeTxt.setText('GET READY!');
                 this.time.addEvent({
@@ -119,7 +118,7 @@ export default class Lobby extends Phaser.Scene {
         });
         // REALTIME 
 
-        // BACKGROUND
+        // BACKGROUND AND HUD
         this.add.image(640, 360, 'background');
         this.add.bitmapText(this.width / 2, 200, 'iceicebaby', 'Wating for opponents...', 50).setOrigin(0.5);
         this.timeTxt = this.add.bitmapText(this.width / 2, 300, 'atarismooth', "", 32).setOrigin(0.5);
@@ -144,7 +143,7 @@ export default class Lobby extends Phaser.Scene {
             this.scene.start('menu');
         });
         // back
-        // BACKGROUND
+        // BACKGROUND AND HUD
 
         // GROUPS AND PLAYERS
         this.playersGrp = this.add.group();
